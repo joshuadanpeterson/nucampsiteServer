@@ -10,7 +10,8 @@ const session = require('express-session');
 const FileStore = require('session-file-store')(session);
 // Import passport for authentication
 const passport = require('passport');
-const authenticate = require('./authenticate');
+// const authenticate = require('./authenticate');
+const config = require('./config');
 
 // Setup Passport strategies
 // authenticate.setup(passport);
@@ -25,7 +26,7 @@ const partnerRouter = require("./routes/partnerRouter");
 // Create Mongoose server
 const mongoose = require('mongoose');
 
-const url = 'mongodb://127.0.0.1:27017/nucampsite';
+const url = config.mongoUrl;
 const connect = mongoose.connect(url, {
     useCreateIndex: true,
     useFindAndModify: false,
