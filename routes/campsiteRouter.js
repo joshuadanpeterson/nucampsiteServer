@@ -6,6 +6,7 @@ const authenticate = require('../authenticate');
 campsiteRouter.route("/")
   .get((req, res, next) => {
     Campsite.find()
+      .populate('comments.author')
       .then(campsites => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
@@ -55,19 +56,14 @@ campsiteRouter.route("/")
 // campsiteId
 campsiteRouter.route("/:campsiteId")
   .get((req, res, next) => {
-    console.log("Requested Campsite ID:", req.params.campsiteId);
     Campsite.findById(req.params.campsiteId)
+      .populate('comments.author')
       .then((campsite) => {
-        console.log("Found Campsite:",
-          campsite); // Log the found campsites
         res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");
         res.json(campsite);
       })
-      .catch(err => {
-        console.error("Error retrieving campsite:", err);
-        next(err);
-      });
+      .catch(err => next(err));
   })
   .post(authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
@@ -103,6 +99,7 @@ campsiteRouter.route("/:campsiteId")
 campsiteRouter.route('/:campsiteId/comments')
   .get((req, res, next) => {
     Campsite.findById(req.params.campsiteId)
+      .populate('comments.author')
       .then(campsite => {
         if (campsite) {
           res.statusCode = 200;
@@ -122,6 +119,7 @@ campsiteRouter.route('/:campsiteId/comments')
     Campsite.findById(req.params.campsiteId)
       .then(campsite => {
         if (campsite) {
+          req.body.author = req.user._id;
           campsite.comments.push(req.body);
           campsite.save()
             .then(campsite => {
@@ -178,6 +176,7 @@ campsiteRouter.route('/:campsiteId/comments')
 campsiteRouter.route('/:campsiteId/comments/:commentId')
   .get((req, res, next) => {
     Campsite.findById(req.params.campsiteId)
+      .populate('comments.author')
       .then(campsite => {
         if (campsite && campsite.comments.id(req.params
             .commentId)) {
