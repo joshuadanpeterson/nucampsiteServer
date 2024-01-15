@@ -110,5 +110,14 @@ app.use(function (err, req, res, next) {
 // Serve Static Files Before Authentication
 app.use(express.static(path.join(__dirname, "public")));
 
+// Secure traffic only
+app.all('*', (req, res, next) => {
+    if (req.secure) {
+      return next();
+    } else {
+        console.log(`Redirecting to: https://${req.hostname}:${app.get('secPort')}${req.url}`);
+        res.redirect(301, `https://${req.hostname}:${app.get('secPort')}${req.url}`);
+    }
+});
 
 module.exports = app;

@@ -4,3 +4,6 @@ sessions
 
 *.txt
 .jshintrc
+
+bin/server.key
+bin/server.cert
