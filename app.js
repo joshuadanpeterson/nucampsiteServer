@@ -13,15 +13,13 @@ const passport = require('passport');
 // const authenticate = require('./authenticate');
 const config = require('./config');
 
-// Setup Passport strategies
-// authenticate.setup(passport);
-
 // Import routers
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 const campsiteRouter = require("./routes/campsiteRouter");
 const promotionRouter = require("./routes/promotionRouter");
 const partnerRouter = require("./routes/partnerRouter");
+const uploadRouter = require('./routes/uploadRouter');
 
 // Create Mongoose server
 const mongoose = require('mongoose');
@@ -85,6 +83,7 @@ app.use(auth);
 app.use("/campsites", campsiteRouter);
 app.use("/promotions", promotionRouter);
 app.use("/partners", partnerRouter);
+app.use('/imageUpload', uploadRouter);
 
 // Set up Campsites router test
 app.get("/campsites/test", (req, res) => {
