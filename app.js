@@ -59,6 +59,9 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Serve Static Files Before Authentication
+app.use(express.static(path.join(__dirname, "public")));
+
 // Route Definitions
 app.use("/", indexRouter);
 // Routes that don't require authentication
@@ -105,9 +108,6 @@ app.use(function (err, req, res, next) {
 	res.status(err.status || 500);
 	res.render("error");
 });
-
-// Serve Static Files Before Authentication
-app.use(express.static(path.join(__dirname, "public")));
 
 // Secure traffic only
 app.all('*', (req, res, next) => {
