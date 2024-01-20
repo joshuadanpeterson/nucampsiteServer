@@ -1,119 +1,100 @@
 #!/usr/bin/env node
 
 /**
- * Import https
- */
-
-const https = require('https');
-const fs = require('fs');
-
-/**
  * Module dependencies.
  */
-
-var app = require('../app');
-var debug = require('debug')('nucampsiteserver:server');
-var http = require('http');
-
-/**
- * Get port from environment and store in Express.
- */
-
-var port = normalizePort(process.env.PORT || '3000');
-app.set('port', port);
-app.set('secPort', port+443);
-
-/**
- * Create HTTP server.
- */
-
-var server = http.createServer(app);
-
-/**
- * Listen on provided port, on all network interfaces.
- */
-
-server.listen(port);
-server.on('error', onError);
-
-
-/**
- * Create HTTPS server.
- */ 
- 
-const options = {
-    key: fs.readFileSync(__dirname+'/server.key'),
-    cert: fs.readFileSync(__dirname+'/server.cert')
-};
-
-const secureServer = https.createServer(options, app);
-
-/**
- * Listen on provided port, on all network interfaces.
- */
-
-secureServer.listen(app.get('secPort'), () => {
-   console.log('Server listening on port', app.get('secPort'));
-});
-secureServer.on('error', onError);
-secureServer.on('listening', onListening);
+const https = require("https");
+const http = require("http");
+const fs = require("fs");
+const app = require("../app");
+const debug = require("debug")("nucampsiteserver:server");
 
 /**
  * Normalize a port into a number, string, or false.
  */
-
 function normalizePort(val) {
-  var port = parseInt(val, 10);
-
-  if (isNaN(port)) {
-    // named pipe
-    return val;
-  }
-
-  if (port >= 0) {
-    // port number
-    return port;
-  }
-
-  return false;
+	const port = parseInt(val, 10);
+	if (isNaN(port)) return val; // named pipe
+	if (port >= 0) return port; // port number
+	return false;
 }
+
+/**
+ * Get ports from environment and store in Express.
+ */
+const httpPort = normalizePort(process.env.PORT || "3000");
+const httpsPort = normalizePort(process.env.HTTPS_PORT || "3443");
+app.set("port", httpPort);
+app.set("secPort", httpsPort);
+
+/**
+ * Create HTTP server.
+ */
+const httpServer = http.createServer((req, res) => {
+	res.writeHead(301, {
+		Location:
+			"https://" +
+			req.headers["host"].replace(httpPort, httpsPort) +
+			req.url,
+	});
+	res.end();
+});
+
+/**
+ * Create HTTPS server.
+ */
+const options = {
+	key: fs.readFileSync(__dirname + "/server.key"),
+	cert: fs.readFileSync(__dirname + "/server.cert"),
+};
+const httpsServer = https.createServer(options, app);
+
+/**
+ * Listen on provided ports, on all network interfaces.
+ */
+httpServer.listen(httpPort, () => {
+	console.log(`HTTP server listening on port ${httpPort}`);
+});
+httpServer.on("error", onError("HTTP"));
+
+httpsServer.listen(httpsPort, () => {
+	console.log(`HTTPS server listening on port ${httpsPort}`);
+});
+httpsServer.on("error", onError("HTTPS"));
+httpsServer.on("listening", onListening(httpsServer));
 
 /**
  * Event listener for HTTP server "error" event.
  */
-
-function onError(error) {
-  if (error.syscall !== 'listen') {
-    throw error;
-  }
-
-  var bind = typeof port === 'string'
-    ? 'Pipe ' + port
-    : 'Port ' + port;
-
-  // handle specific listen errors with friendly messages
-  switch (error.code) {
-    case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
-      process.exit(1);
-      break;
-    case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
-      process.exit(1);
-      break;
-    default:
-      throw error;
-  }
+function onError(serverType) {
+	return (error) => {
+		if (error.syscall !== "listen") throw error;
+		const bind = typeof port === "string" ? "Pipe " + port : "Port " + port;
+		switch (error.code) {
+			case "EACCES":
+				console.error(
+					`${serverType} ${bind} requires elevated privileges`
+				);
+				process.exit(1);
+				break;
+			case "EADDRINUSE":
+				console.error(`${serverType} ${bind} is already in use`);
+				process.exit(1);
+				break;
+			default:
+				throw error;
+		}
+	};
 }
 
 /**
  * Event listener for HTTP server "listening" event.
  */
-
-function onListening() {
-  var addr = server.address();
-  var bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port;
-  debug('Listening on ' + bind);
+function onListening(server) {
+	return () => {
+		const addr = server.address();
+		const bind =
+			typeof addr === "string" ? `pipe ${addr}` : `port ${addr.port}`;
+		debug(`Listening on ${bind}`);
+	};
 }
